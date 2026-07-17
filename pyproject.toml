@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "politecrawl"
+version = "1.0.0"
+description = "A courteous, safety-first web crawler and scraper."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "politecrawl contributors" }]
+keywords = ["scraping", "crawler", "web", "robots", "ssrf", "cli"]
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "responses>=0.24",
+    "ruff>=0.4",
+    "mypy>=1.8",
+    "bandit>=1.7",
+    "types-requests>=2.31",
+]
+
+[project.scripts]
+politecrawl = "politecrawl.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/politecrawl"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.bandit]
+exclude_dirs = ["tests"]
