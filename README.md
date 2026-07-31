@@ -1,6 +1,6 @@
 # politecrawl
 
-[![CI](https://github.com/mojtaba-py-code/web_scraping/actions/workflows/ci.yml/badge.svg)](https://github.com/mojtaba-py-code/web_scraping/actions/workflows/ci.yml)
+[![CI](https://github.com/mojtaba-py-code/web-scraping/actions/workflows/ci.yml/badge.svg)](https://github.com/mojtaba-py-code/web-scraping/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
 [![Code style: ruff](https://img.shields.io/badge/lint-ruff-black.svg)](https://github.com/astral-sh/ruff)
 [![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
