@@ -1,5 +1,11 @@
 # politecrawl
 
+[![CI](https://github.com/mojtaba-py-code/web_scraping/actions/workflows/ci.yml/badge.svg)](https://github.com/mojtaba-py-code/web_scraping/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
+[![Code style: ruff](https://img.shields.io/badge/lint-ruff-black.svg)](https://github.com/astral-sh/ruff)
+[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A courteous, safety-first web crawler and scraper. Given a seed URL it crawls
 within that site, extracts structured data from each page, and writes JSON
 Lines — while respecting `robots.txt` and rate limits and defending against
