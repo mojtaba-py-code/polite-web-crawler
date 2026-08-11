@@ -41,6 +41,22 @@ export POLITECRAWL_AUTH_TOKEN="..."      # sent as: Authorization: Bearer ...
 export POLITECRAWL_COOKIE="session=..."  # sent as: Cookie: ...
 ```
 
+## What a session looks like
+
+The SSRF guard refusing a private address, then a real crawl of a public
+scraping sandbox and one record of the JSONL it writes:
+
+![Terminal session: a blocked private address, then eight pages crawled and
+written as JSON Lines](docs/images/session.png)
+
+Eight pages took 9.7 s because the crawler holds itself to one request per
+second per host. `security_blocked=1` on the first run is the guard doing its
+job: the seed resolved to `192.168.1.1`, so nothing was fetched. That check runs
+on every URL, not just the seed, and there is no flag to switch it off.
+
+(`quotes.toscrape.com` serves no `robots.txt`, which is why `robots_skipped=0`
+there. Sites that do serve one are parsed and obeyed — see `tests/test_robots.py`.)
+
 ## Usage
 
 ```bash
