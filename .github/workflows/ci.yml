@@ -47,4 +47,11 @@ jobs:
         run: pytest
 
       - name: Bandit (security scan)
-        run: bandit -r src --severity-level medium
+        run: bandit -c pyproject.toml -r src --severity-level medium
+
+      # Audits the resolved dependency tree, so a CVE in a transitive package
+      # fails the build rather than waiting to be noticed.
+      - name: pip-audit (dependency CVEs)
+        run: |
+          python -m pip install pip-audit
+          pip-audit --skip-editable --progress-spinner off
