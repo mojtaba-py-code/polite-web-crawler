@@ -6,6 +6,12 @@ response-size cap (defeating huge-response / decompression bombs), and a
 content-type allowlist. Redirects are followed manually so each hop is
 re-validated and re-checked for SSRF, rather than trusting requests to
 follow a chain that could end at an internal address.
+
+Following redirects by hand means ``requests`` never runs its own
+``Session.rebuild_auth``, which is what normally strips ``Authorization`` when a
+redirect crosses to another origin. That protection is reimplemented here: any
+configured credential is sent only to the origin the fetch started on, so a
+crawled site cannot 302 to a host it controls and collect the token.
 """
 
 from __future__ import annotations
@@ -15,7 +21,7 @@ import random
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 import requests
 
@@ -25,6 +31,13 @@ from .logging_setup import sanitize_for_log
 from .urls import ensure_public_host, host_of, validate_url
 
 logger = logging.getLogger(__name__)
+
+
+def _origin_of(url: str) -> tuple[str, str, int | None]:
+    """Return (scheme, host, port) — the origin a credential is bound to."""
+    parsed = urlsplit(url)
+    return parsed.scheme.lower(), (parsed.hostname or "").lower(), parsed.port
+
 
 _RETRYABLE = {500, 502, 503, 504}
 HostCheck = Callable[[str], None]
@@ -64,9 +77,14 @@ class Fetcher:
         allowlist; robots.txt fetches pass ``False`` to allow text/plain.
         """
         current = validate_url(url)
+        # Credentials belong to the origin the caller asked for, not to whatever
+        # a redirect chain happens to end at.
+        credential_origin = _origin_of(current)
         for _hop in range(self.settings.max_redirects + 1):
             self._host_check(host_of(current))
-            resp = self._request_with_retries(current)
+            resp = self._request_with_retries(
+                current, credential_origin=credential_origin
+            )
 
             if resp.status_code in (301, 302, 303, 307, 308):
                 location = resp.headers.get("Location")
@@ -81,7 +99,24 @@ class Fetcher:
 
         raise FetchError(f"too many redirects starting at {url}")
 
-    def _request_with_retries(self, url: str) -> requests.Response:
+    def _request_with_retries(
+        self, url: str, *, credential_origin: tuple[str, str, int | None] | None = None
+    ) -> requests.Response:
+        """GET *url*, retrying transient failures.
+
+        ``credential_origin`` is the origin the configured credential belongs
+        to. When the request has travelled to a different origin the credential
+        is withheld — mirroring what ``requests`` does for a followed redirect.
+        """
+        headers = self.settings.auth_headers()
+        same_origin = credential_origin is None or _origin_of(url) == credential_origin
+        if headers and not same_origin:
+            logger.debug(
+                "withholding credentials on cross-origin redirect to %s",
+                sanitize_for_log(url),
+            )
+            headers = {}
+
         last_exc: Exception | None = None
         for attempt in range(self.settings.max_retries + 1):
             try:
@@ -90,7 +125,7 @@ class Fetcher:
                     timeout=self.settings.timeout,
                     stream=True,
                     allow_redirects=False,
-                    headers=self.settings.auth_headers(),
+                    headers=headers,
                 )
             except (requests.Timeout, requests.ConnectionError) as exc:
                 last_exc = exc

@@ -141,3 +141,69 @@ def test_too_many_redirects(settings):
     )
     with pytest.raises(FetchError, match="too many redirects"):
         fetcher.fetch("https://example.com/loop")
+
+
+# --- Credentials must not follow a redirect off-origin ----------------------
+#
+# Redirects are followed by hand, so `requests` never runs `Session.rebuild_auth`
+# — the thing that normally strips `Authorization` when a hop changes origin.
+# A crawled site that 302s to a host it controls would otherwise be handed the
+# bearer token and session cookie.
+
+
+def _auth_settings(settings):
+    from politecrawl.config import Secret
+
+    return dataclasses.replace(
+        settings, auth_token=Secret("s3cret-token"), cookie=Secret("session=abc")
+    )
+
+
+@responses.activate
+def test_credentials_are_withheld_after_a_cross_origin_redirect(settings):
+    responses.get(
+        "https://example.com/",
+        status=302,
+        headers={"Location": "https://attacker.example/collect"},
+    )
+    responses.get(
+        "https://attacker.example/collect",
+        body="<html>ok</html>",
+        status=200,
+        content_type="text/html",
+    )
+
+    fetcher = Fetcher(
+        _auth_settings(settings), host_check=lambda _h: None, sleeper=lambda _s: None
+    )
+    fetcher.fetch("https://example.com/")
+
+    first, second = responses.calls[0].request, responses.calls[1].request
+    assert first.headers.get("Authorization") == "Bearer s3cret-token"
+    assert first.headers.get("Cookie") == "session=abc"
+    # The attacker-controlled hop must see neither.
+    assert second.headers.get("Authorization") is None
+    assert second.headers.get("Cookie") is None
+
+
+@responses.activate
+def test_credentials_survive_a_same_origin_redirect(settings):
+    responses.get(
+        "https://example.com/a",
+        status=302,
+        headers={"Location": "https://example.com/b"},
+    )
+    responses.get(
+        "https://example.com/b",
+        body="<html>ok</html>",
+        status=200,
+        content_type="text/html",
+    )
+
+    fetcher = Fetcher(
+        _auth_settings(settings), host_check=lambda _h: None, sleeper=lambda _s: None
+    )
+    fetcher.fetch("https://example.com/a")
+
+    second = responses.calls[1].request
+    assert second.headers.get("Authorization") == "Bearer s3cret-token"
