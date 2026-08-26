@@ -19,6 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4",
+    "pytest-cov>=4.1",
     "responses>=0.24",
     "ruff>=0.4",
     "mypy>=1.8",
@@ -50,6 +51,22 @@ warn_unused_ignores = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.coverage.run]
+branch = true
+source = ["politecrawl"]
+omit = ["*/__main__.py"]
+
+[tool.coverage.report]
+# The floor is a ratchet, not a target: coverage sits at 88% branch, and the gate is
+# set below that so an unrelated refactor does not fail the build, while a real
+# drop in tested behaviour still does. Raise it when the number rises.
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
 
 [tool.bandit]
 exclude_dirs = ["tests"]

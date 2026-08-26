@@ -43,8 +43,10 @@ jobs:
       - name: Mypy (strict type-check)
         run: mypy src
 
-      - name: Pytest
-        run: pytest
+      # The 80% floor lives in [tool.coverage.report] in pyproject.toml, so a local
+      # `pytest` enforces exactly what CI does. Under the floor, this step fails.
+      - name: Pytest (coverage floor enforced)
+        run: pytest --cov=politecrawl --cov-report=term-missing
 
       - name: Bandit (security scan)
         run: bandit -c pyproject.toml -r src --severity-level medium

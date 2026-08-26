@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/mojtaba-py-code/polite-web-crawler/actions/workflows/ci.yml/badge.svg)](https://github.com/mojtaba-py-code/polite-web-crawler/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
+[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25%20enforced%20in%20CI-brightgreen.svg)](.github/workflows/ci.yml)
 [![Code style: ruff](https://img.shields.io/badge/lint-ruff-black.svg)](https://github.com/astral-sh/ruff)
 [![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -118,7 +119,8 @@ is bounded by page and depth limits.
 Engineering. Small, single-purpose modules; full type hints; frozen
 dataclasses; a typed error hierarchy; a single failing page never aborts the
 crawl; and a test suite that mocks HTTP and fakes DNS so nothing touches the
-network.
+network. 46 tests, 88% branch coverage, with the floor enforced in CI — under
+80% the build fails rather than the badge quietly lying.
 
 ## Project layout
 
