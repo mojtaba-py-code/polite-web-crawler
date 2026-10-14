@@ -4,7 +4,8 @@ Exit codes:
     0  success
     1  crawl produced no pages / runtime failure
     2  usage / configuration / validation error
-    3  security violation (e.g. the seed resolves to a private address)
+    3  security violation: the SSRF guard refused the seed itself (e.g. it
+       resolves to a private address, or does not resolve at all)
 """
 
 from __future__ import annotations
@@ -108,6 +109,12 @@ def _cmd_crawl(args: argparse.Namespace) -> int:
         f"security_blocked={stats.blocked_security}",
         file=sys.stderr,
     )
+    # The crawler counts a SecurityError per page instead of raising it, so a
+    # blocked seed never reaches main()'s handler.  Links are only queued from a
+    # fetched page, so with nothing fetched the one blocked URL was the seed.
+    if stats.fetched == 0 and stats.blocked_security:
+        logger.error("security violation: the seed URL was blocked")
+        return EXIT_SECURITY
     return EXIT_OK if pages else EXIT_EMPTY
 
 

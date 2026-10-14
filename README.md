@@ -92,6 +92,12 @@ Each JSONL record contains: `url`, `status`, `depth`, `title`, `description`,
 | 2    | usage / configuration / validation error    |
 | 3    | security violation (e.g. private seed host) |
 
+Exit code 3 means the SSRF guard refused the seed itself, so nothing was
+fetched. That covers a seed that resolves to a private, loopback or reserved
+address, a seed that redirects to one, and a seed host that does not resolve at
+all (the guard fails closed). When a guarded *link* is blocked after the seed
+was fetched, the crawl carries on and is counted in `security_blocked`.
+
 ## Use as a library
 
 ```python
